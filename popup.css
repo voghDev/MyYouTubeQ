@@ -206,3 +206,48 @@ h2 {
 #videoList::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Snackbar styles */
+.snackbar {
+  position: fixed;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #323232;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  transition: bottom 0.3s ease-in-out;
+  z-index: 1000;
+  min-width: 300px;
+}
+
+.snackbar.show {
+  bottom: 20px;
+}
+
+#snackbarMessage {
+  flex: 1;
+  font-size: 14px;
+}
+
+#undoBtn {
+  background: transparent;
+  color: #4caf50;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+#undoBtn:hover {
+  background: rgba(76, 175, 80, 0.1);
+}
