@@ -174,8 +174,6 @@ function editVideo(index) {
 
 // Delete a video
 function deleteVideo(index) {
-  if (!confirm('Delete this video from the queue?')) return;
-
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
     queue.splice(index, 1);
