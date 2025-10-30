@@ -70,12 +70,22 @@ h2 {
   background: #cc0000;
 }
 
+/* Add Current Button - default state (not in queue) */
 #addCurrentBtn {
-  background: #065fd4;
+  background: #ff0000;
   color: white;
 }
 
 #addCurrentBtn:hover {
+  background: #cc0000;
+}
+
+/* Remove Current Button - when video is in queue */
+#addCurrentBtn.in-queue {
+  background: #065fd4;
+}
+
+#addCurrentBtn.in-queue:hover {
   background: #044ea8;
 }
 
