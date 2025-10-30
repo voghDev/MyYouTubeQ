@@ -1,6 +1,11 @@
 // Storage key for the video queue
 const STORAGE_KEY = 'youtubeQueue';
 
+// Undo state
+let deleteTimeout = null;
+let deletedVideo = null;
+let deletedIndex = null;
+
 // Initialize popup
 document.addEventListener('DOMContentLoaded', function() {
   loadQueue();
@@ -8,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Event listeners
   document.getElementById('addBtn').addEventListener('click', addVideo);
   document.getElementById('addCurrentBtn').addEventListener('click', addCurrentPage);
+  document.getElementById('undoBtn').addEventListener('click', undoDelete);
 
   // Allow Enter key to add video
   document.getElementById('videoUrl').addEventListener('keypress', function(e) {
@@ -172,14 +178,81 @@ function editVideo(index) {
   });
 }
 
-// Delete a video
+// Delete a video with undo capability
 function deleteVideo(index) {
+  // Clear any existing delete timeout
+  if (deleteTimeout) {
+    clearTimeout(deleteTimeout);
+  }
+
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
+
+    // Store the deleted video and index for undo
+    deletedVideo = queue[index];
+    deletedIndex = index;
+
+    // Remove from queue immediately for UI responsiveness
     queue.splice(index, 1);
+
+    // Update storage and UI
+    chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+      loadQueue();
+      showSnackbar(`"${deletedVideo.title}" deleted`);
+
+      // Set timeout to make deletion permanent (clear undo state)
+      deleteTimeout = setTimeout(() => {
+        deletedVideo = null;
+        deletedIndex = null;
+        deleteTimeout = null;
+      }, 5000); // 5 seconds to undo
+    });
+  });
+}
+
+// Undo the last delete operation
+function undoDelete() {
+  if (!deletedVideo || deletedIndex === null) return;
+
+  // Clear the timeout
+  if (deleteTimeout) {
+    clearTimeout(deleteTimeout);
+    deleteTimeout = null;
+  }
+
+  chrome.storage.sync.get([STORAGE_KEY], function(result) {
+    const queue = result[STORAGE_KEY] || [];
+
+    // Restore the video at its original position
+    queue.splice(deletedIndex, 0, deletedVideo);
 
     chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
       loadQueue();
+      hideSnackbar();
+
+      // Clear undo state
+      deletedVideo = null;
+      deletedIndex = null;
     });
   });
+}
+
+// Show snackbar with message
+function showSnackbar(message) {
+  const snackbar = document.getElementById('snackbar');
+  const snackbarMessage = document.getElementById('snackbarMessage');
+
+  snackbarMessage.textContent = message;
+  snackbar.classList.add('show');
+
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    hideSnackbar();
+  }, 5000);
+}
+
+// Hide snackbar
+function hideSnackbar() {
+  const snackbar = document.getElementById('snackbar');
+  snackbar.classList.remove('show');
 }
