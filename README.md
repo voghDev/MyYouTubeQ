@@ -69,8 +69,7 @@ To make the MyYouTubeQ button permanently visible in your Chrome toolbar:
 
 The extension button will now appear in your toolbar for quick access!
 
-![Pinned extension button in Chrome toolbar]()
-*Screenshot placeholder: Extension icon pinned in the toolbar*
+<img width="394" height="49" alt="ext4" src="https://github.com/user-attachments/assets/f10cceab-0e18-4322-a5af-bed10263a2ff" />
 
 ### Adding Videos to Your Queue
 
@@ -78,8 +77,7 @@ The extension button will now appear in your toolbar for quick access!
 
 When watching any YouTube video, you'll see an "Add to Queue" button below the video player (near the like/share buttons):
 
-![Add to Queue button on YouTube]()
-*Screenshot placeholder: "Add to Queue" button on a YouTube video page*
+<img width="1624" height="1297" alt="ext2" src="https://github.com/user-attachments/assets/47c4988b-880d-45a3-accf-bb49704dc260" />
 
 Simply click this button to add the current video to your queue.
 
@@ -93,8 +91,7 @@ Simply click this button to add the current video to your queue.
 
 Click the MyYouTubeQ extension icon to open the queue manager:
 
-![Extension popup showing video queue]()
-*Screenshot placeholder: MyYouTubeQ popup window with list of videos*
+<img width="452" height="469" alt="ext3" src="https://github.com/user-attachments/assets/3712205d-1803-43fa-8de3-04983d939593" />
 
 From here you can:
 
@@ -135,6 +132,8 @@ From here you can:
 4. Confirm deletion
 
 **Note**: Your saved video queue will be deleted when you uninstall the extension.
+
+<img width="1526" height="521" alt="ext1" src="https://github.com/user-attachments/assets/6127c1c7-d1bf-4a78-9ee6-0307e41e506d" />
 
 ## License
 
