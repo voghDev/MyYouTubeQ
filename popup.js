@@ -9,10 +9,11 @@ let deletedIndex = null;
 // Initialize popup
 document.addEventListener('DOMContentLoaded', function() {
   loadQueue();
+  updateCurrentPageButton(); // Check if current page is in queue
 
   // Event listeners
   document.getElementById('addBtn').addEventListener('click', addVideo);
-  document.getElementById('addCurrentBtn').addEventListener('click', addCurrentPage);
+  document.getElementById('addCurrentBtn').addEventListener('click', toggleCurrentPage);
   document.getElementById('undoBtn').addEventListener('click', undoDelete);
 
   // Allow Enter key to add video
@@ -29,6 +30,7 @@ function loadQueue() {
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
     displayQueue(queue);
+    updateCurrentPageButton(); // Update button state when queue changes
   });
 }
 
@@ -126,8 +128,8 @@ function addVideo() {
   });
 }
 
-// Add current YouTube page to queue
-function addCurrentPage() {
+// Toggle current page (add or remove from queue)
+function toggleCurrentPage() {
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     const tab = tabs[0];
 
@@ -138,11 +140,53 @@ function addCurrentPage() {
 
     chrome.storage.sync.get([STORAGE_KEY], function(result) {
       const queue = result[STORAGE_KEY] || [];
-      queue.push({ url: tab.url, title: tab.title });
 
-      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
-        loadQueue();
-      });
+      // Check if current video is already in queue
+      const existingIndex = queue.findIndex(video => video.url === tab.url);
+
+      if (existingIndex !== -1) {
+        // Video is in queue, remove it
+        queue.splice(existingIndex, 1);
+        chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+          loadQueue();
+          showSnackbar(`"${tab.title}" removed from queue`);
+        });
+      } else {
+        // Video is not in queue, add it
+        queue.push({ url: tab.url, title: tab.title });
+        chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+          loadQueue();
+          showSnackbar(`"${tab.title}" added to queue`);
+        });
+      }
+    });
+  });
+}
+
+// Update the "Add Current Page" button based on whether current page is in queue
+function updateCurrentPageButton() {
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    const tab = tabs[0];
+    const addCurrentBtn = document.getElementById('addCurrentBtn');
+
+    // If not on a YouTube video page, disable button
+    if (!tab.url || !tab.url.includes('youtube.com/watch')) {
+      addCurrentBtn.textContent = 'Add Current Page';
+      addCurrentBtn.classList.remove('in-queue');
+      return;
+    }
+
+    chrome.storage.sync.get([STORAGE_KEY], function(result) {
+      const queue = result[STORAGE_KEY] || [];
+      const isInQueue = queue.some(video => video.url === tab.url);
+
+      if (isInQueue) {
+        addCurrentBtn.textContent = 'Remove from Queue';
+        addCurrentBtn.classList.add('in-queue');
+      } else {
+        addCurrentBtn.textContent = 'Add to Queue';
+        addCurrentBtn.classList.remove('in-queue');
+      }
     });
   });
 }
