@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MyYouTubeQ</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>MyYouTubeQ</h1>
+
+    <div class="add-section">
+      <h2>Add Video</h2>
+      <input type="text" id="videoUrl" placeholder="Video URL">
+      <input type="text" id="videoTitle" placeholder="Video Title">
+      <button id="addBtn">Add to Queue</button>
+      <button id="addCurrentBtn">Add Current Page</button>
+    </div>
+
+    <div class="queue-section">
+      <h2>Video Queue (<span id="queueCount">0</span>)</h2>
+      <div id="videoList"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

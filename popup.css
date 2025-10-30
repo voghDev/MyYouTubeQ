@@ -1,0 +1,208 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 450px;
+  min-height: 300px;
+  background: #f5f5f5;
+}
+
+.container {
+  padding: 15px;
+}
+
+h1 {
+  color: #ff0000;
+  font-size: 24px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+h2 {
+  color: #333;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.add-section {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-section input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.add-section input:focus {
+  outline: none;
+  border-color: #ff0000;
+}
+
+.add-section button {
+  padding: 8px 12px;
+  margin-right: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+#addBtn {
+  background: #ff0000;
+  color: white;
+}
+
+#addBtn:hover {
+  background: #cc0000;
+}
+
+#addCurrentBtn {
+  background: #065fd4;
+  color: white;
+}
+
+#addCurrentBtn:hover {
+  background: #044ea8;
+}
+
+.queue-section {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#queueCount {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+#videoList {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.video-item {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.video-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.video-content {
+  flex: 1;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.video-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-url {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.video-actions button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-visit {
+  background: #065fd4;
+  color: white;
+}
+
+.btn-visit:hover {
+  background: #044ea8;
+}
+
+.btn-edit {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #d97706;
+}
+
+.btn-delete {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Scrollbar styling */
+#videoList::-webkit-scrollbar {
+  width: 8px;
+}
+
+#videoList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+#videoList::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+#videoList::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

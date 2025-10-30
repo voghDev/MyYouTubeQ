@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Icons</title>
+</head>
+<body>
+  <h1>Icon Generator for MyYouTubeQ</h1>
+  <p>Open this file in a browser, right-click each icon below and save as the filename shown.</p>
+
+  <div>
+    <h2>icon16.png</h2>
+    <canvas id="icon16" width="16" height="16"></canvas>
+  </div>
+
+  <div>
+    <h2>icon48.png</h2>
+    <canvas id="icon48" width="48" height="48"></canvas>
+  </div>
+
+  <div>
+    <h2>icon128.png</h2>
+    <canvas id="icon128" width="128" height="128"></canvas>
+  </div>
+
+  <script>
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+
+      // Background
+      ctx.fillStyle = '#FF0000';
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw a queue/list icon
+      ctx.fillStyle = '#FFFFFF';
+
+      const padding = size * 0.2;
+      const barHeight = size * 0.12;
+      const gap = size * 0.08;
+
+      // Draw 3 horizontal bars
+      for (let i = 0; i < 3; i++) {
+        const y = padding + (barHeight + gap) * i;
+        ctx.fillRect(padding, y, size - 2 * padding, barHeight);
+      }
+
+      // Draw play button triangle on the last bar
+      const playSize = barHeight * 0.7;
+      const playX = size - padding - playSize * 1.2;
+      const playY = padding + (barHeight + gap) * 2 + barHeight / 2;
+
+      ctx.fillStyle = '#FF0000';
+      ctx.beginPath();
+      ctx.moveTo(playX, playY - playSize / 2);
+      ctx.lineTo(playX, playY + playSize / 2);
+      ctx.lineTo(playX + playSize, playY);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    drawIcon('icon16', 16);
+    drawIcon('icon48', 48);
+    drawIcon('icon128', 128);
+
+    // Auto-download images
+    setTimeout(() => {
+      ['icon16', 'icon48', 'icon128'].forEach(id => {
+        const canvas = document.getElementById(id);
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = id + '.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      });
+    }, 500);
+  </script>
+</body>
+</html>
