@@ -6,6 +6,13 @@ let deleteTimeout = null;
 let deletedVideo = null;
 let deletedIndex = null;
 
+// Extract YouTube video ID from URL
+function getYouTubeVideoId(url) {
+  if (!url) return null;
+  const match = url.match(/[?&]v=([^&]+)/);
+  return match ? match[1] : null;
+}
+
 // Initialize popup
 document.addEventListener('DOMContentLoaded', function() {
   loadQueue();
@@ -141,8 +148,9 @@ function addOrRemoveCurrentPage() {
     chrome.storage.sync.get([STORAGE_KEY], function(result) {
       const queue = result[STORAGE_KEY] || [];
 
-      // Check if current video is already in queue
-      const existingIndex = queue.findIndex(video => video.url === tab.url);
+      // Check if current video is already in queue (compare by video ID)
+      const currentVideoId = getYouTubeVideoId(tab.url);
+      const existingIndex = queue.findIndex(video => getYouTubeVideoId(video.url) === currentVideoId);
 
       if (existingIndex !== -1) {
         // Video is in queue, remove it
@@ -178,7 +186,8 @@ function updateCurrentPageButton() {
 
     chrome.storage.sync.get([STORAGE_KEY], function(result) {
       const queue = result[STORAGE_KEY] || [];
-      const isInQueue = queue.some(video => video.url === tab.url);
+      const currentVideoId = getYouTubeVideoId(tab.url);
+      const isInQueue = queue.some(video => getYouTubeVideoId(video.url) === currentVideoId);
 
       if (isInQueue) {
         addCurrentBtn.textContent = 'Remove from Queue';
