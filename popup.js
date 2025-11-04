@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Event listeners
   document.getElementById('addBtn').addEventListener('click', addVideo);
-  document.getElementById('addCurrentBtn').addEventListener('click', toggleCurrentPage);
+  document.getElementById('addCurrentBtn').addEventListener('click', addOrRemoveCurrentPage);
   document.getElementById('undoBtn').addEventListener('click', undoDelete);
 
   // Allow Enter key to add video
@@ -128,8 +128,8 @@ function addVideo() {
   });
 }
 
-// Toggle current page (add or remove from queue)
-function toggleCurrentPage() {
+// Add or remove current page from queue
+function addOrRemoveCurrentPage() {
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     const tab = tabs[0];
 
