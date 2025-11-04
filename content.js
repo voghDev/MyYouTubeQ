@@ -62,7 +62,7 @@ function createAddToQueueButton() {
         button.style.background = '#cc0000';
       });
 
-      button.addEventListener('click', toggleCurrentVideoInQueue);
+      button.addEventListener('click', addOrRemoveCurrentVideoInQueue);
 
       buttonContainer.appendChild(button);
       actionsBar.parentElement.appendChild(buttonContainer);
@@ -76,8 +76,8 @@ function createAddToQueueButton() {
   setTimeout(() => clearInterval(checkActionsBar), 10000);
 }
 
-// Toggle current video in queue (add or remove)
-function toggleCurrentVideoInQueue() {
+// Add or remove current video from queue
+function addOrRemoveCurrentVideoInQueue() {
   const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent?.trim() ||
                      document.querySelector('h1 yt-formatted-string')?.textContent?.trim() ||
                      document.title.replace(' - YouTube', '');

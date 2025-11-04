@@ -19,17 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
   updateCurrentPageButton(); // Check if current page is in queue
 
   // Event listeners
-  document.getElementById('addBtn').addEventListener('click', addVideo);
   document.getElementById('addCurrentBtn').addEventListener('click', addOrRemoveCurrentPage);
   document.getElementById('undoBtn').addEventListener('click', undoDelete);
-
-  // Allow Enter key to add video
-  document.getElementById('videoUrl').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') addVideo();
-  });
-  document.getElementById('videoTitle').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') addVideo();
-  });
 });
 
 // Load and display the queue
@@ -108,31 +99,6 @@ function createVideoItem(video, index) {
   item.appendChild(actions);
 
   return item;
-}
-
-// Add a video to the queue
-function addVideo() {
-  const urlInput = document.getElementById('videoUrl');
-  const titleInput = document.getElementById('videoTitle');
-
-  const url = urlInput.value.trim();
-  const title = titleInput.value.trim();
-
-  if (!url || !title) {
-    alert('Please enter both URL and title');
-    return;
-  }
-
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
-    queue.push({ url, title });
-
-    chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
-      urlInput.value = '';
-      titleInput.value = '';
-      loadQueue();
-    });
-  });
 }
 
 // Add or remove current page from queue
