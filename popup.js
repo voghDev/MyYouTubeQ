@@ -6,22 +6,21 @@ let deleteTimeout = null;
 let deletedVideo = null;
 let deletedIndex = null;
 
+// Extract YouTube video ID from URL
+function getYouTubeVideoId(url) {
+  if (!url) return null;
+  const match = url.match(/[?&]v=([^&]+)/);
+  return match ? match[1] : null;
+}
+
 // Initialize popup
 document.addEventListener('DOMContentLoaded', function() {
   loadQueue();
+  updateCurrentPageButton(); // Check if current page is in queue
 
   // Event listeners
-  document.getElementById('addBtn').addEventListener('click', addVideo);
-  document.getElementById('addCurrentBtn').addEventListener('click', addCurrentPage);
+  document.getElementById('addCurrentBtn').addEventListener('click', addOrRemoveCurrentPage);
   document.getElementById('undoBtn').addEventListener('click', undoDelete);
-
-  // Allow Enter key to add video
-  document.getElementById('videoUrl').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') addVideo();
-  });
-  document.getElementById('videoTitle').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') addVideo();
-  });
 });
 
 // Load and display the queue
@@ -29,6 +28,7 @@ function loadQueue() {
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
     displayQueue(queue);
+    updateCurrentPageButton(); // Update button state when queue changes
   });
 }
 
@@ -101,33 +101,8 @@ function createVideoItem(video, index) {
   return item;
 }
 
-// Add a video to the queue
-function addVideo() {
-  const urlInput = document.getElementById('videoUrl');
-  const titleInput = document.getElementById('videoTitle');
-
-  const url = urlInput.value.trim();
-  const title = titleInput.value.trim();
-
-  if (!url || !title) {
-    alert('Please enter both URL and title');
-    return;
-  }
-
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
-    queue.push({ url, title });
-
-    chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
-      urlInput.value = '';
-      titleInput.value = '';
-      loadQueue();
-    });
-  });
-}
-
-// Add current YouTube page to queue
-function addCurrentPage() {
+// Add or remove current page from queue
+function addOrRemoveCurrentPage() {
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     const tab = tabs[0];
 
@@ -138,11 +113,55 @@ function addCurrentPage() {
 
     chrome.storage.sync.get([STORAGE_KEY], function(result) {
       const queue = result[STORAGE_KEY] || [];
-      queue.push({ url: tab.url, title: tab.title });
 
-      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
-        loadQueue();
-      });
+      // Check if current video is already in queue (compare by video ID)
+      const currentVideoId = getYouTubeVideoId(tab.url);
+      const existingIndex = queue.findIndex(video => getYouTubeVideoId(video.url) === currentVideoId);
+
+      if (existingIndex !== -1) {
+        // Video is in queue, remove it
+        queue.splice(existingIndex, 1);
+        chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+          loadQueue();
+          showSnackbar(`"${tab.title}" removed from queue`);
+        });
+      } else {
+        // Video is not in queue, add it
+        queue.push({ url: tab.url, title: tab.title });
+        chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+          loadQueue();
+          showSnackbar(`"${tab.title}" added to queue`);
+        });
+      }
+    });
+  });
+}
+
+// Update the "Add Current Page" button based on whether current page is in queue
+function updateCurrentPageButton() {
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    const tab = tabs[0];
+    const addCurrentBtn = document.getElementById('addCurrentBtn');
+
+    // If not on a YouTube video page, disable button
+    if (!tab.url || !tab.url.includes('youtube.com/watch')) {
+      addCurrentBtn.textContent = 'Add Current Page';
+      addCurrentBtn.classList.remove('in-queue');
+      return;
+    }
+
+    chrome.storage.sync.get([STORAGE_KEY], function(result) {
+      const queue = result[STORAGE_KEY] || [];
+      const currentVideoId = getYouTubeVideoId(tab.url);
+      const isInQueue = queue.some(video => getYouTubeVideoId(video.url) === currentVideoId);
+
+      if (isInQueue) {
+        addCurrentBtn.textContent = 'Remove from Queue';
+        addCurrentBtn.classList.add('in-queue');
+      } else {
+        addCurrentBtn.textContent = 'Add to Queue';
+        addCurrentBtn.classList.remove('in-queue');
+      }
     });
   });
 }

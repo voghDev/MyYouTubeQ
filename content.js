@@ -1,6 +1,13 @@
 // Content script for YouTube pages
 const STORAGE_KEY = 'youtubeQueue';
 
+// Extract YouTube video ID from URL
+function getYouTubeVideoId(url) {
+  if (!url) return null;
+  const match = url.match(/[?&]v=([^&]+)/);
+  return match ? match[1] : null;
+}
+
 // Create and add the "Add to Queue" button
 function createAddToQueueButton() {
   // Check if we're on a video page
@@ -55,10 +62,13 @@ function createAddToQueueButton() {
         button.style.background = '#cc0000';
       });
 
-      button.addEventListener('click', addCurrentVideoToQueue);
+      button.addEventListener('click', addOrRemoveCurrentVideoInQueue);
 
       buttonContainer.appendChild(button);
       actionsBar.parentElement.appendChild(buttonContainer);
+
+      // Update button state based on queue
+      updateButtonState(button);
     }
   }, 500);
 
@@ -66,8 +76,8 @@ function createAddToQueueButton() {
   setTimeout(() => clearInterval(checkActionsBar), 10000);
 }
 
-// Add current video to queue
-function addCurrentVideoToQueue() {
+// Add or remove current video from queue
+function addOrRemoveCurrentVideoInQueue() {
   const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent?.trim() ||
                      document.querySelector('h1 yt-formatted-string')?.textContent?.trim() ||
                      document.title.replace(' - YouTube', '');
@@ -81,28 +91,86 @@ function addCurrentVideoToQueue() {
 
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
+    const currentVideoId = getYouTubeVideoId(videoUrl);
 
-    // Check if video already exists in queue
-    const exists = queue.some(video => video.url === videoUrl);
+    // Check if video already exists in queue (compare by video ID)
+    const existingIndex = queue.findIndex(video => getYouTubeVideoId(video.url) === currentVideoId);
 
-    if (exists) {
-      alert('This video is already in your queue!');
-      return;
+    if (existingIndex !== -1) {
+      // Video is in queue, remove it
+      queue.splice(existingIndex, 1);
+      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+        showSuccessMessage('Removed from MyYouTubeQ!');
+        updateButtonStateForAllButtons();
+      });
+    } else {
+      // Video is not in queue, add it
+      queue.push({ url: videoUrl, title: videoTitle });
+      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+        showSuccessMessage('Added to MyYouTubeQ!');
+        updateButtonStateForAllButtons();
+      });
     }
-
-    queue.push({ url: videoUrl, title: videoTitle });
-
-    chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
-      // Show success message
-      showSuccessMessage();
-    });
   });
 }
 
+// Update button state based on whether video is in queue
+function updateButtonState(button) {
+  const videoUrl = window.location.href;
+
+  chrome.storage.sync.get([STORAGE_KEY], function(result) {
+    const queue = result[STORAGE_KEY] || [];
+    const currentVideoId = getYouTubeVideoId(videoUrl);
+    const isInQueue = queue.some(video => getYouTubeVideoId(video.url) === currentVideoId);
+
+    if (isInQueue) {
+      // Video is in queue - show "Remove from Queue" with blue color
+      button.innerHTML = `
+        <svg height="24" width="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"></path>
+        </svg>
+        <span style="margin-left: 6px;">Remove from Queue</span>
+      `;
+      button.style.background = '#065fd4';
+
+      button.onmouseenter = () => {
+        button.style.background = '#0448a0';
+      };
+      button.onmouseleave = () => {
+        button.style.background = '#065fd4';
+      };
+    } else {
+      // Video is not in queue - show "Add to Queue" with red color
+      button.innerHTML = `
+        <svg height="24" width="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"></path>
+        </svg>
+        <span style="margin-left: 6px;">Add to Queue</span>
+      `;
+      button.style.background = '#cc0000';
+
+      button.onmouseenter = () => {
+        button.style.background = '#a00000';
+      };
+      button.onmouseleave = () => {
+        button.style.background = '#cc0000';
+      };
+    }
+  });
+}
+
+// Update all buttons on the page
+function updateButtonStateForAllButtons() {
+  const button = document.querySelector('#addToQueueBtn button');
+  if (button) {
+    updateButtonState(button);
+  }
+}
+
 // Show success message
-function showSuccessMessage() {
+function showSuccessMessage(text = 'Added to MyYouTubeQ!') {
   const message = document.createElement('div');
-  message.textContent = 'Added to MyYouTubeQ!';
+  message.textContent = text;
   message.style.cssText = `
     position: fixed;
     top: 80px;
