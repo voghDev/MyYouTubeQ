@@ -105,7 +105,7 @@ function addOrRemoveCurrentVideoInQueue() {
       });
     } else {
       // Video is not in queue, add it
-      queue.push({ url: videoUrl, title: videoTitle });
+      queue.push({ url: videoUrl, title: videoTitle, dateAdded: Date.now() });
       chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
         showSuccessMessage('Added to MyYouTubeQ!');
         updateButtonStateForAllButtons();
