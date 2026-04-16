@@ -27,17 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadQueue() {
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
-    const needsMigration = queue.some(v => !v.dateAdded);
-    if (needsMigration) {
-      queue.forEach((v, i) => {
-        if (!v.dateAdded) v.dateAdded = i + 1;
-      });
-      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
-        displayQueue(queue);
-        updateCurrentPageButton();
-      });
-      return;
-    }
     displayQueue(queue);
     updateCurrentPageButton();
   });
