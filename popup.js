@@ -28,7 +28,7 @@ function loadQueue() {
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
     displayQueue(queue);
-    updateCurrentPageButton(); // Update button state when queue changes
+    updateCurrentPageButton();
   });
 }
 
@@ -45,7 +45,8 @@ function displayQueue(queue) {
     return;
   }
 
-  queue.forEach((video, index) => {
+  const sorted = [...queue].sort((a, b) => (b.dateAdded || 0) - (a.dateAdded || 0));
+  sorted.forEach((video, index) => {
     const videoItem = createVideoItem(video, index);
     videoList.appendChild(videoItem);
   });
@@ -127,7 +128,7 @@ function addOrRemoveCurrentPage() {
         });
       } else {
         // Video is not in queue, add it
-        queue.push({ url: tab.url, title: tab.title });
+        queue.push({ url: tab.url, title: tab.title, dateAdded: Date.now() });
         chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
           loadQueue();
           showSnackbar(`"${tab.title}" added to queue`);
