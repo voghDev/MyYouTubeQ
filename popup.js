@@ -26,7 +26,23 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load and display the queue
 function loadQueue() {
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
+    let queue = result[STORAGE_KEY] || [];
+
+    // Ensure all items have dateAdded for proper sorting and compatibility
+    let needsSave = false;
+    queue = queue.map(video => {
+      if (!video.dateAdded) {
+        needsSave = true;
+        return { ...video, dateAdded: Date.now() };
+      }
+      return video;
+    });
+
+    // Save if we added missing dateAdded fields
+    if (needsSave) {
+      chrome.storage.sync.set({ [STORAGE_KEY]: queue });
+    }
+
     displayQueue(queue);
     updateCurrentPageButton();
   });
@@ -45,9 +61,11 @@ function displayQueue(queue) {
     return;
   }
 
-  const sorted = [...queue].sort((a, b) => (b.dateAdded || 0) - (a.dateAdded || 0));
-  sorted.forEach((video, index) => {
-    const videoItem = createVideoItem(video, index);
+  const sorted = [...queue].map((video, originalIndex) => ({ video, originalIndex }))
+    .sort((a, b) => (b.video.dateAdded || 0) - (a.video.dateAdded || 0));
+
+  sorted.forEach(({ video, originalIndex }) => {
+    const videoItem = createVideoItem(video, originalIndex);
     videoList.appendChild(videoItem);
   });
 }
@@ -187,7 +205,11 @@ function editVideo(index) {
     if (newUrl === null) return; // User cancelled
 
     if (newTitle.trim() && newUrl.trim()) {
-      queue[index] = { url: newUrl.trim(), title: newTitle.trim() };
+      queue[index] = {
+        url: newUrl.trim(),
+        title: newTitle.trim(),
+        dateAdded: video.dateAdded || Date.now()
+      };
 
       chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
         loadQueue();
@@ -243,8 +265,9 @@ function undoDelete() {
   chrome.storage.sync.get([STORAGE_KEY], function(result) {
     const queue = result[STORAGE_KEY] || [];
 
-    // Restore the video at its original position
-    queue.splice(deletedIndex, 0, deletedVideo);
+    // Restore the video at its original position with dateAdded preserved
+    const restoredVideo = { ...deletedVideo, dateAdded: deletedVideo.dateAdded || Date.now() };
+    queue.splice(deletedIndex, 0, restoredVideo);
 
     chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
       loadQueue();
