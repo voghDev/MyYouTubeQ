@@ -13,6 +13,23 @@ function getYouTubeVideoId(url) {
   return match ? match[1] : null;
 }
 
+// Read queue from local storage, migrating from sync storage on first run
+function getQueue(callback) {
+  chrome.storage.local.get([STORAGE_KEY], function(result) {
+    if (result[STORAGE_KEY] !== undefined) {
+      callback(result[STORAGE_KEY]);
+      return;
+    }
+    chrome.storage.sync.get([STORAGE_KEY], function(syncResult) {
+      const queue = syncResult[STORAGE_KEY] || [];
+      chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
+        if (queue.length > 0) chrome.storage.sync.remove(STORAGE_KEY);
+      });
+      callback(queue);
+    });
+  });
+}
+
 // Initialize popup
 document.addEventListener('DOMContentLoaded', function() {
   loadQueue();
@@ -25,9 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load and display the queue
 function loadQueue() {
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    let queue = result[STORAGE_KEY] || [];
-
+  getQueue(function(queue) {
     // Ensure all items have dateAdded for proper sorting and compatibility
     let needsSave = false;
     queue = queue.map(video => {
@@ -40,7 +55,7 @@ function loadQueue() {
 
     // Save if we added missing dateAdded fields
     if (needsSave) {
-      chrome.storage.sync.set({ [STORAGE_KEY]: queue });
+      chrome.storage.local.set({ [STORAGE_KEY]: queue });
     }
 
     displayQueue(queue);
@@ -130,9 +145,7 @@ function addOrRemoveCurrentPage() {
       return;
     }
 
-    chrome.storage.sync.get([STORAGE_KEY], function(result) {
-      const queue = result[STORAGE_KEY] || [];
-
+    getQueue(function(queue) {
       // Check if current video is already in queue (compare by video ID)
       const currentVideoId = getYouTubeVideoId(tab.url);
       const existingIndex = queue.findIndex(video => getYouTubeVideoId(video.url) === currentVideoId);
@@ -140,14 +153,14 @@ function addOrRemoveCurrentPage() {
       if (existingIndex !== -1) {
         // Video is in queue, remove it
         queue.splice(existingIndex, 1);
-        chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+        chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
           loadQueue();
           showSnackbar(`"${tab.title}" removed from queue`);
         });
       } else {
         // Video is not in queue, add it
         queue.push({ url: tab.url, title: tab.title, dateAdded: Date.now() });
-        chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+        chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
           loadQueue();
           showSnackbar(`"${tab.title}" added to queue`);
         });
@@ -169,8 +182,7 @@ function updateCurrentPageButton() {
       return;
     }
 
-    chrome.storage.sync.get([STORAGE_KEY], function(result) {
-      const queue = result[STORAGE_KEY] || [];
+    getQueue(function(queue) {
       const currentVideoId = getYouTubeVideoId(tab.url);
       const isInQueue = queue.some(video => getYouTubeVideoId(video.url) === currentVideoId);
 
@@ -192,8 +204,7 @@ function visitVideo(url) {
 
 // Edit a video
 function editVideo(index) {
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
+  getQueue(function(queue) {
     const video = queue[index];
 
     if (!video) return;
@@ -211,7 +222,7 @@ function editVideo(index) {
         dateAdded: video.dateAdded || Date.now()
       };
 
-      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+      chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
         loadQueue();
       });
     } else {
@@ -227,9 +238,7 @@ function deleteVideo(index) {
     clearTimeout(deleteTimeout);
   }
 
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
-
+  getQueue(function(queue) {
     // Store the deleted video and index for undo
     deletedVideo = queue[index];
     deletedIndex = index;
@@ -238,7 +247,7 @@ function deleteVideo(index) {
     queue.splice(index, 1);
 
     // Update storage and UI
-    chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+    chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
       loadQueue();
       showSnackbar(`"${deletedVideo.title}" deleted`);
 
@@ -262,14 +271,12 @@ function undoDelete() {
     deleteTimeout = null;
   }
 
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
-
+  getQueue(function(queue) {
     // Restore the video at its original position with dateAdded preserved
     const restoredVideo = { ...deletedVideo, dateAdded: deletedVideo.dateAdded || Date.now() };
     queue.splice(deletedIndex, 0, restoredVideo);
 
-    chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+    chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
       loadQueue();
       hideSnackbar();
 
