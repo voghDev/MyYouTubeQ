@@ -8,6 +8,23 @@ function getYouTubeVideoId(url) {
   return match ? match[1] : null;
 }
 
+// Read queue from local storage, migrating from sync storage on first run
+function getQueue(callback) {
+  chrome.storage.local.get([STORAGE_KEY], function(result) {
+    if (result[STORAGE_KEY] !== undefined) {
+      callback(result[STORAGE_KEY]);
+      return;
+    }
+    chrome.storage.sync.get([STORAGE_KEY], function(syncResult) {
+      const queue = syncResult[STORAGE_KEY] || [];
+      chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
+        if (queue.length > 0) chrome.storage.sync.remove(STORAGE_KEY);
+      });
+      callback(queue);
+    });
+  });
+}
+
 // Create and add the "Add to Queue" button
 function createAddToQueueButton() {
   // Check if we're on a video page
@@ -89,8 +106,7 @@ function addOrRemoveCurrentVideoInQueue() {
     return;
   }
 
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
+  getQueue(function(queue) {
     const currentVideoId = getYouTubeVideoId(videoUrl);
 
     // Check if video already exists in queue (compare by video ID)
@@ -99,14 +115,14 @@ function addOrRemoveCurrentVideoInQueue() {
     if (existingIndex !== -1) {
       // Video is in queue, remove it
       queue.splice(existingIndex, 1);
-      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+      chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
         showSuccessMessage('Removed from MyYouTubeQ!');
         updateButtonStateForAllButtons();
       });
     } else {
       // Video is not in queue, add it
       queue.push({ url: videoUrl, title: videoTitle, dateAdded: Date.now() });
-      chrome.storage.sync.set({ [STORAGE_KEY]: queue }, function() {
+      chrome.storage.local.set({ [STORAGE_KEY]: queue }, function() {
         showSuccessMessage('Added to MyYouTubeQ!');
         updateButtonStateForAllButtons();
       });
@@ -118,8 +134,7 @@ function addOrRemoveCurrentVideoInQueue() {
 function updateButtonState(button) {
   const videoUrl = window.location.href;
 
-  chrome.storage.sync.get([STORAGE_KEY], function(result) {
-    const queue = result[STORAGE_KEY] || [];
+  getQueue(function(queue) {
     const currentVideoId = getYouTubeVideoId(videoUrl);
     const isInQueue = queue.some(video => getYouTubeVideoId(video.url) === currentVideoId);
 
